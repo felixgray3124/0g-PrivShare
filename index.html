@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>PrivShare - Decentralized File Sharing</title>
+    <!-- Crypto polyfill for 0G SDK -->
+    <script>
+      // Provide global polyfills before SDK loads
+      if (typeof global === 'undefined') {
+        window.global = globalThis;
+      }
+      if (typeof process === 'undefined') {
+        window.process = {
+          browser: true,
+          version: 'v16.0.0',
+          platform: 'browser',
+          env: {}
+        };
+      }
+      if (typeof Buffer === 'undefined') {
+        // Create a simple Buffer polyfill
+        window.Buffer = {
+          from: function(data, encoding) {
+            if (typeof data === 'string') {
+              return new TextEncoder().encode(data);
+            }
+            return new Uint8Array(data);
+          },
+          isBuffer: function(obj) {
+            return obj instanceof Uint8Array;
+          }
+        };
+      }
+      
+      // Create node_crypto polyfill that SDK expects
+      window.node_crypto = {
+        createHash: function(algorithm) {
+          let data = null;
+          return {
+            update: function(newData) {
+              if (data === null) {
+                data = newData;
+              } else if (data instanceof Uint8Array && newData instanceof Uint8Array) {
+                // Concatenate Uint8Arrays
+                const combined = new Uint8Array(data.length + newData.length);
+                combined.set(data);
+                combined.set(newData, data.length);
+                data = combined;
+              } else {
+                // Convert to string and concatenate
+                const str1 = typeof data === 'string' ? data : new TextDecoder().decode(data);
+                const str2 = typeof newData === 'string' ? newData : new TextDecoder().decode(newData);
+                data = str1 + str2;
+              }
+              return this;
+            },
+            digest: function(encoding) {
+              // Simple hash implementation - in production use a proper crypto library
+              const str = typeof data === 'string' ? data : new TextDecoder().decode(data);
+              let hash = 0;
+              for (let i = 0; i < str.length; i++) {
+                const char = str.charCodeAt(i);
+                hash = ((hash << 5) - hash) + char;
+                hash = hash & hash; // Convert to 32-bit integer
+              }
+              return encoding === 'hex' ? hash.toString(16) : hash.toString();
+            }
+          };
+        }
+      };
+      
+      // Create promises polyfill that SDK expects
+      window.promises = {
+        // Empty object for now, SDK might not use it
+      };
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
