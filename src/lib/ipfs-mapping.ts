@@ -86,7 +86,7 @@ export async function storeMappingToIPFS(shareCode: string, rootHash: string, me
       providerInfo: providerInfo || {
         name: '0G Storage',
         network: '0G-Galileo-Testnet',
-        chainId: 16601
+        chainId: 16602
       }
     };
     

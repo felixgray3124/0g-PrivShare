@@ -4,7 +4,7 @@ import { injected, metaMask, walletConnect } from 'wagmi/connectors'
 
 // 0G Chain configuration
 const zgChain = {
-  id: 16601, // 0G Galileo Testnet
+  id: 16602, // 0G Galileo Testnet
   name: '0G-Galileo-Testnet',
   network: '0g-galileo-testnet',
   nativeCurrency: {

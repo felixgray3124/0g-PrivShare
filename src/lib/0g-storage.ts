@@ -381,7 +381,7 @@ export class ZgStorageService {
         console.log('0G Storage: Network name:', networkStatus.name);
         
         // Debug: Check if we're on the correct network
-        const expectedChainId = 16601; // 0G Galileo Testnet
+        const expectedChainId = 16602; // 0G Galileo Testnet
         console.log('0G Storage: Network check - Expected:', expectedChainId, 'Got:', networkStatus.chainId);
         if (Number(networkStatus.chainId) !== expectedChainId) {
           console.warn(`0G Storage: Wrong network! Expected chainId ${expectedChainId}, got ${networkStatus.chainId}`);

@@ -161,7 +161,7 @@ export const useFileUpload = () => {
         name: '0G Storage',
         type: '0g-storage',
         network: '0G-Galileo-Testnet',
-        chainId: 16601
+        chainId: 16602
       });
       
       setProgress(90);
