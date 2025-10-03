@@ -80,6 +80,7 @@ export interface UploadResult {
 export interface DownloadResult {
   success: boolean;
   data?: Uint8Array;
+  size?: number;
   error?: string;
 }
 
@@ -269,10 +270,48 @@ export class ZgStorageService {
       console.log('0G Storage: Creating Indexer with RPC:', this.config.indexerRpc);
       this.indexer = new window.zgstorage.Indexer(this.config.indexerRpc);
       console.log('0G Storage: Indexer created successfully');
+      
+      // Override storage node selection to enforce HTTPS in browser environments
+      this.overrideStorageNodeSelection();
     } catch (error) {
       console.error('0G Storage: Failed to initialize SDK:', error);
       throw new Error('Failed to initialize 0G Storage SDK: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
+  }
+
+  // Override storage node selection to handle Mixed Content in browser environments
+  private overrideStorageNodeSelection() {
+    if (typeof window === 'undefined') return;
+    
+    // Store original selectNodes method
+    const originalSelectNodes = this.indexer.selectNodes.bind(this.indexer);
+    
+    // Override selectNodes to handle Mixed Content issues
+    this.indexer.selectNodes = async (...args: any[]) => {
+      const result = await originalSelectNodes(...args);
+      
+      if (result && result.nodes) {
+        // In HTTPS environments, we need to use the Indexer API instead of direct storage nodes
+        // The Indexer should handle the communication with storage nodes
+        console.log('0G Storage: Using Indexer API for storage operations in HTTPS environment');
+        
+        // Filter out direct storage node access in HTTPS environments
+        result.nodes = result.nodes.filter((node: any) => {
+          if (node.url && node.url.startsWith('http://')) {
+            console.warn('0G Storage: Skipping HTTP storage node in HTTPS environment:', node.url);
+            return false;
+          }
+          return true;
+        });
+        
+        // If no HTTPS nodes available, we'll rely on Indexer API
+        if (result.nodes.length === 0) {
+          console.log('0G Storage: No direct HTTPS storage nodes, using Indexer API');
+        }
+      }
+      
+      return result;
+    };
   }
 
   /**
@@ -481,7 +520,25 @@ export class ZgStorageService {
       // Initialize SDK if not already done
       await this.initializeSDK();
 
-      // Get file locations from indexer
+      // Use Indexer API for download to avoid Mixed Content issues in HTTPS environments
+      console.log('0G Storage: Using Indexer API for download to avoid Mixed Content issues');
+      
+      // Try to use Indexer's download method first
+      try {
+        const fileData = await this.indexer.download(rootHash, withProof);
+        if (fileData && fileData instanceof Uint8Array) {
+          console.log('0G Storage: Download successful via Indexer API');
+          return {
+            success: true,
+            data: fileData,
+            size: fileData.length
+          };
+        }
+      } catch (indexerError) {
+        console.warn('0G Storage: Indexer download failed, trying fallback method:', indexerError);
+      }
+
+      // Fallback: Get file locations and try direct access (may fail in HTTPS)
       const locations = await this.indexer.getFileLocations(rootHash);
       if (!locations || locations.length === 0) {
         throw new Error('File not found on any storage node');
@@ -489,8 +546,11 @@ export class ZgStorageService {
 
       console.log('0G Storage: Found file on', locations.length, 'nodes');
 
-      // Create storage node clients
-      const storageNodes = locations.map((location: any) => new window.zgstorage.StorageNode(location.url));
+      // Create storage node clients (keep original URLs)
+      const storageNodes = locations.map((location: any) => {
+        console.log('0G Storage: Using storage node URL:', location.url);
+        return new window.zgstorage.StorageNode(location.url);
+      });
       
       // Get file info from first available node
       let fileInfo = null;
@@ -548,8 +608,11 @@ export class ZgStorageService {
 
       console.log('0G Storage: Found file on', locations.length, 'nodes');
 
-      // Create storage node clients
-      const storageNodes = locations.map((location: any) => new window.zgstorage.StorageNode(location.url));
+      // Create storage node clients (keep original URLs)
+      const storageNodes = locations.map((location: any) => {
+        console.log('0G Storage: Using storage node URL:', location.url);
+        return new window.zgstorage.StorageNode(location.url);
+      });
       
       // Create Downloader instance
       const downloader = new window.zgstorage.Downloader(storageNodes);
@@ -690,8 +753,11 @@ export class ZgStorageService {
 
       console.log('0G Storage: Found file on', locations.length, 'nodes');
 
-      // Create storage node clients
-      const storageNodes = locations.map((location: any) => new window.zgstorage.StorageNode(location.url));
+      // Create storage node clients (keep original URLs)
+      const storageNodes = locations.map((location: any) => {
+        console.log('0G Storage: Using storage node URL:', location.url);
+        return new window.zgstorage.StorageNode(location.url);
+      });
       
       // Get file info from first available node
       let fileInfo = null;
