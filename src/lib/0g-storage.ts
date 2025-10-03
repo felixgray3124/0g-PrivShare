@@ -520,25 +520,10 @@ export class ZgStorageService {
       // Initialize SDK if not already done
       await this.initializeSDK();
 
-      // Use Indexer API for download to avoid Mixed Content issues in HTTPS environments
-      console.log('0G Storage: Using Indexer API for download to avoid Mixed Content issues');
+      // Use browser-compatible download method
+      console.log('0G Storage: Using browser-compatible download method');
       
-      // Try to use Indexer's download method first
-      try {
-        const fileData = await this.indexer.download(rootHash, withProof);
-        if (fileData && fileData instanceof Uint8Array) {
-          console.log('0G Storage: Download successful via Indexer API');
-          return {
-            success: true,
-            data: fileData,
-            size: fileData.length
-          };
-        }
-      } catch (indexerError) {
-        console.warn('0G Storage: Indexer download failed, trying fallback method:', indexerError);
-      }
-
-      // Fallback: Get file locations and try direct access (may fail in HTTPS)
+      // Get file locations from indexer
       const locations = await this.indexer.getFileLocations(rootHash);
       if (!locations || locations.length === 0) {
         throw new Error('File not found on any storage node');
@@ -572,14 +557,15 @@ export class ZgStorageService {
         throw new Error('File not found or not finalized');
       }
 
-      // Download file data using browser-compatible method
-      const fileData = await this.downloadFileData(rootHash, withProof);
+      // Use Downloader class but with browser-compatible data collection
+      const fileData = await this.downloadFileDataBrowser(rootHash, fileInfo, withProof);
       
       console.log('0G Storage: Download successful!');
       
       return {
         success: true,
-        data: fileData
+        data: fileData,
+        size: fileData.length
       };
     } catch (error) {
       console.error('0G Storage: Download failed:', error);
@@ -911,6 +897,85 @@ export class ZgStorageService {
       console.error('0G Storage: Network status check failed:', error);
       throw new Error('Failed to initialize 0G Storage SDK: ' + (error instanceof Error ? error.message : 'Unknown error'));
     }
+  }
+
+  /**
+   * Download file data using browser-compatible methods (bypasses fs.existsSync)
+   */
+  private async downloadFileDataBrowser(rootHash: string, fileInfo: any, withProof: boolean = true): Promise<Uint8Array> {
+    console.log('0G Storage: Using browser-compatible download method');
+    
+    // Get file locations
+    const locations = await this.indexer.getFileLocations(rootHash);
+    if (!locations || locations.length === 0) {
+      throw new Error('File not found on any storage node');
+    }
+
+    console.log('0G Storage: Found file on', locations.length, 'nodes');
+
+    // Create storage node clients
+    const storageNodes = locations.map((location: any) => {
+      console.log('0G Storage: Using storage node URL:', location.url);
+      return new window.zgstorage.StorageNode(location.url);
+    });
+
+    // Calculate segments
+    const numSegments = fileInfo.uploadedSegNum || fileInfo.numSegments || 1;
+    console.log('0G Storage: Downloading file data, segments:', numSegments);
+
+    // Download segments and assemble data
+    const segmentDataArray: Uint8Array[] = [];
+    let totalSize = 0;
+
+    for (let i = 0; i < numSegments; i++) {
+      try {
+        // Try to download segment with proof first
+        let segmentData: Uint8Array | null = null;
+        
+        for (const node of storageNodes) {
+          try {
+            if (withProof) {
+              const result = await node.downloadSegmentWithProof(rootHash, i);
+              if (result && result.data) {
+                segmentData = ethers.decodeBase64(result.data);
+                break;
+              }
+            } else {
+              const result = await node.downloadSegment(rootHash, i);
+              if (result && result.data) {
+                segmentData = ethers.decodeBase64(result.data);
+                break;
+              }
+            }
+          } catch (error) {
+            console.warn(`0G Storage: Failed to download segment ${i} from node:`, error);
+            continue;
+          }
+        }
+
+        if (segmentData) {
+          segmentDataArray.push(segmentData);
+          totalSize += segmentData.length;
+          console.log(`0G Storage: Downloaded segment ${i}, size: ${segmentData.length}`);
+        } else {
+          throw new Error(`Failed to download segment ${i}`);
+        }
+      } catch (error) {
+        console.error(`0G Storage: Error downloading segment ${i}:`, error);
+        throw new Error(`Failed to download segment ${i}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+      }
+    }
+
+    // Assemble final data
+    const finalData = new Uint8Array(totalSize);
+    let offset = 0;
+    for (const segment of segmentDataArray) {
+      finalData.set(segment, offset);
+      offset += segment.length;
+    }
+
+    console.log('0G Storage: File data assembled, total size:', finalData.length);
+    return finalData;
   }
 }
 
