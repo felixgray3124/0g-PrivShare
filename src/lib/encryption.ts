@@ -220,29 +220,3 @@ export async function decryptFile(
     throw new Error('File decryption failed, please check if the key is correct')
   }
 }
-
-// Generate share code for 0G Storage
-export function generateShareCode(): string {
-  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789'
-  let result = '0g-'
-  
-  for (let i = 0; i < 4; i++) {
-    for (let j = 0; j < 4; j++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-    if (i < 3) result += '-'
-  }
-  
-  return `privshare://${result}`
-}
-
-// Validate share code format for 0G Storage
-export function validateShareCode(shareCode: string): boolean {
-  const pattern = /^privshare:\/\/0g-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}-[a-z0-9]{4}$/
-  return pattern.test(shareCode)
-}
-
-// Extract code part from share code
-export function extractCodeFromShareCode(shareCode: string): string {
-  return shareCode.replace('privshare://', '')
-}

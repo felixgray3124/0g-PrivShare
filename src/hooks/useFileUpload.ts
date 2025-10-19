@@ -4,7 +4,7 @@ import { useAccount } from "wagmi";
 import { useZgStorage } from "../providers/ZgStorageProvider";
 import { useEthersSigner } from "./useEthers";
 import { encryptFile, generateKey } from "../lib/encryption";
-import { generateRandomShareCode, storeMappingToIPFS } from "../lib/ipfs-mapping";
+import { generateShareCode, storeMappingTo0G } from "../lib/ipfs-mapping";
 import { config } from "../config";
 
 export type UploadedInfo = {
@@ -132,38 +132,27 @@ export const useFileUpload = () => {
       setStatus("📊 File uploaded successfully! Generating share code...");
       setProgress(70);
 
-      // Generate random share code
-      const shareCode = generateRandomShareCode();
-      
-      // Store complete metadata to IPFS
-      console.log('Storing complete metadata to IPFS:', {
-        shareCode,
-        rootHash: uploadResult.rootHash,
-        isEncrypted,
-        encryptionKey,
-        iv,
-        txHash: uploadResult.txHash
-      });
-      
-      await storeMappingToIPFS(shareCode, uploadResult.rootHash, {
-        fileName: file.name,
-        fileSize: file.size,
-        mimeType: file.type,
-        isEncrypted: isEncrypted,
-        encryptionKey: encryptionKey,
-        iv: iv,
-        uploader: address,
-        uploadTime: Date.now(),
-        txHash: uploadResult.txHash,
-        finalityRequired: true,
-        expectedReplica: 1
-      }, {
-        name: '0G Storage',
-        type: '0g-storage',
-        network: '0G-Galileo-Testnet',
-        chainId: 16602
-      });
-      
+      // Generate share code (original format, independent of rootHash)
+      const shareCode = generateShareCode();
+
+      // Store mapping to 0G (non-blocking best-effort)
+      try {
+        setStatus("📝 Storing mapping to 0G...");
+        await storeMappingTo0G(shareCode, {
+          rootHash: uploadResult.rootHash!,
+          iv,
+          fileName: file.name,
+          fileSize: file.size,
+          mimeType: file.type,
+          uploader: address!,
+          uploadTime: Date.now(),
+          txHash: uploadResult.txHash,
+        }, signer);
+        setStatus("📝 Mapping stored on 0G");
+      } catch (mapErr) {
+        console.warn("Store mapping failed:", mapErr);
+      }
+
       setProgress(90);
       console.log('Setting upload info:', {
         fileName: file.name,

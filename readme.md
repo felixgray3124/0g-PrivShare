@@ -81,9 +81,7 @@ PrivShare leverages **0G's modular infrastructure** to deliver **decentralized f
 - **0G Chain** - EVM-compatible blockchain
 
 ### Backend & Storage
-- **IPFS** - Content addressing and metadata storage
-- **Pinata** - IPFS pinning service
-- **0G Storage** - Decentralized file storage
+- **0G Storage** - Decentralized file storage (content and metadata via share code)
 
 ### Development Tools
 - **ESLint** - Code linting
@@ -143,16 +141,10 @@ privshare/
 Create a `.env.local` file in the root directory:
 
 ```env
-# Pinata IPFS Configuration
-VITE_PINATA_JWT=your_pinata_jwt_token
-# OR
-VITE_PINATA_API_KEY=your_pinata_api_key
-VITE_PINATA_API_SECRET=your_pinata_api_secret
-
 # WalletConnect Configuration
 VITE_WALLETCONNECT_PROJECT_ID=your_walletconnect_project_id
 
-# 0G Storage Configuration
+# 0G Storage Configuration (optional overrides; defaults are hardcoded)
 VITE_0G_RPC_URL=https://evmrpc-testnet.0g.ai/
 VITE_0G_INDEXER_URL=https://indexer-storage-testnet-turbo.0g.ai
 ```
@@ -207,13 +199,6 @@ pnpm preview
 
 ## 🔧 Configuration
 
-### Pinata Setup
-
-1. **Create Pinata account** at [pinata.cloud](https://pinata.cloud)
-2. **Get API credentials**:
-   - JWT Token (recommended)
-   - OR API Key + Secret
-3. **Add credentials** to `.env.local`
 
 ### WalletConnect Setup
 

@@ -1,8 +1,7 @@
-// File metadata storage and management
+// File metadata model (unified for 0G Storage)
 export interface FileMetadata {
   id: string
   shareCode: string
-  pieceCid: string
   fileName: string
   fileSize: number
   mimeType: string
@@ -13,40 +12,35 @@ export interface FileMetadata {
   uploadTime: number
   expiresAt?: number
   providerInfo?: any
-  // 0G Storage specific fields
-  rootHash?: string
-  txHash?: string
-  provider?: string
+  // Storage provider info
+  pieceCid?: string // Backward compatibility
+  rootHash?: string // 0G Storage root hash
+  txHash?: string   // Transaction hash (if available)
+  provider?: string // e.g., '0g-storage'
 }
 
-// Metadata is now completely stored in IPFS, no longer using local storage
+// No centralized metadata storage: derive at runtime
 class FileMetadataStorage {
-  // These methods are now just interface compatible, actual data is stored in IPFS
-  static saveMetadata(metadata: FileMetadata): void {
-    // Metadata is now stored to IPFS via storeMappingToIPFS
-    console.log('Metadata will be stored via IPFS:', metadata)
+  static saveMetadata(_metadata: FileMetadata): void {
+    console.warn('No centralized metadata storage; use share code + 0G indexer')
   }
   
-  static getMetadata(shareCode: string): FileMetadata | null {
-    // Metadata is now retrieved from IPFS via getCidFromIPFS
-    console.log('Metadata will be retrieved from IPFS:', shareCode)
+  static getMetadata(_shareCode: string): FileMetadata | null {
+    console.warn('No metadata database; reconstruct from share code when needed')
     return null
   }
   
   static getAllMetadata(): Record<string, FileMetadata> {
-    // No longer support getting all metadata
-    console.warn('No longer support getting all metadata, please use IPFS query')
+    console.warn('Listing all metadata is unsupported in this architecture')
     return {}
   }
   
   static deleteMetadata(_shareCode: string): void {
-    // No longer support deleting metadata
-    console.warn('No longer support deleting metadata, please manage through Pinata')
+    console.warn('Deletion is not applicable; metadata is not centrally stored')
   }
   
   static getMetadataByPieceCid(_pieceCid: string): FileMetadata | null {
-    // No longer support finding metadata by CID
-    console.warn('No longer support finding metadata by CID, please use share code')
+    console.warn('Lookup by CID is unsupported; use share code/rootHash instead')
     return null
   }
 }

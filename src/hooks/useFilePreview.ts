@@ -1,33 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { FileMetadata } from "../lib/fileMetadata";
-import { validateShareCode, extractCodeFromShareCode } from "../lib/ipfs-mapping";
-
-// Pinata API configuration
-const PINATA_API_URL = 'https://api.pinata.cloud';
-const PINATA_GATEWAY_URL = 'https://gateway.pinata.cloud';
-
-// Get Pinata authentication headers
-function getPinataHeaders(): Record<string, string> {
-  const jwt = import.meta.env.VITE_PINATA_JWT;
-  const apiKey = import.meta.env.VITE_PINATA_API_KEY;
-  const apiSecret = import.meta.env.VITE_PINATA_API_SECRET;
-  
-  if (jwt) {
-    return {
-      'Authorization': `Bearer ${jwt}`,
-      'Content-Type': 'application/json'
-    };
-  } else if (apiKey && apiSecret) {
-    return {
-      'pinata_api_key': apiKey,
-      'pinata_secret_api_key': apiSecret,
-      'Content-Type': 'application/json'
-    };
-  } else {
-    throw new Error('Pinata configuration missing');
-  }
-}
+import { validateShareCode, getMappingFrom0G } from "../lib/ipfs-mapping";
 
 export type FilePreviewInfo = {
   metadata: FileMetadata | null;
@@ -49,65 +23,30 @@ export const useFilePreview = () => {
         throw new Error("Invalid share code format");
       }
 
-      // Extract code from share code
-      const code = extractCodeFromShareCode(shareCode);
-      const headers = getPinataHeaders();
-      
-      console.log('Preview searching share code:', code);
-      
-      // Search for files containing this shareCode via Pinata API
-      const response = await fetch(`${PINATA_API_URL}/data/pinList?metadata[keyvalues]={"shareCode":{"value":"${code}","op":"eq"}}`, {
-        method: 'GET',
-        headers
-      });
-      
-      if (!response.ok) {
-        throw new Error(`Pinata API error: ${response.status} ${response.statusText}`);
-      }
-      
-      const result = await response.json();
-      console.log('Preview search results:', result);
-      
-      if (result.rows && result.rows.length > 0) {
-        // Get complete metadata from IPFS
-        const ipfsHash = result.rows[0].ipfs_pin_hash;
-        console.log('Found preview IPFS Hash:', ipfsHash);
-        
-        const dataResponse = await fetch(`${PINATA_GATEWAY_URL}/ipfs/${ipfsHash}`);
-        
-        if (dataResponse.ok) {
-          const mappingData = await dataResponse.json();
-          console.log('Retrieved preview mapping data from IPFS:', mappingData);
-          
-          // Extract metadata from complete IPFS data
-          const metadata = {
-            id: mappingData.shareCode, // Use shareCode as id
-            shareCode: mappingData.shareCode,
-            fileName: mappingData.fileName || mappingData.metadata?.fileName || 'unknown',
-            fileSize: mappingData.fileSize || mappingData.metadata?.fileSize || 0,
-            mimeType: mappingData.mimeType || mappingData.metadata?.mimeType || 'application/octet-stream',
-            isEncrypted: mappingData.isEncrypted || mappingData.metadata?.isEncrypted || false,
-            encryptionKey: mappingData.encryptionKey || mappingData.metadata?.encryptionKey,
-            iv: mappingData.iv || mappingData.metadata?.iv,
-            uploader: mappingData.uploader || mappingData.metadata?.uploader || 'unknown',
-            uploadTime: mappingData.uploadTime || mappingData.metadata?.uploadTime || Date.now(),
-            pieceCid: mappingData.rootHash || mappingData.pieceCid, // Use rootHash for 0G Storage
-            // Add 0G Storage specific fields
-            rootHash: mappingData.rootHash,
-            txHash: mappingData.txHash,
-            provider: mappingData.provider
-          };
-          
-          return {
-            metadata: metadata,
-            isValid: true,
-          };
-        } else {
-          throw new Error('Unable to get metadata from IPFS');
-        }
-      } else {
-        throw new Error('File not found. The share code may be invalid or the file may have been deleted.');
-      }
+      // Resolve mapping from share code
+      const mapping = await getMappingFrom0G(shareCode);
+
+      // Build metadata using mapping
+      const metadata: FileMetadata = {
+        id: shareCode,
+        shareCode,
+        fileName: mapping.fileName || 'unknown',
+        fileSize: mapping.fileSize || 0,
+        mimeType: mapping.mimeType || 'application/octet-stream',
+        isEncrypted: !!mapping.iv,
+        encryptionKey: undefined,
+        iv: mapping.iv,
+        uploader: mapping.uploader || 'unknown',
+        uploadTime: mapping.uploadTime || Date.now(),
+        pieceCid: mapping.rootHash,
+        rootHash: mapping.rootHash,
+        provider: '0g-storage'
+      };
+
+      return {
+        metadata,
+        isValid: true,
+      };
     },
     onSuccess: (data) => {
       setPreviewInfo(data);
