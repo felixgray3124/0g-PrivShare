@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { decryptFileFromBlob } from "../lib/encryption";
-import { validateShareCode, getMappingFrom0G } from "../lib/ipfs-mapping";
+import { validateShareCode, getMappingFrom0G } from "../lib/mapping";
 import { useZgStorage } from "../providers/ZgStorageProvider";
 import { config } from "../config";
 

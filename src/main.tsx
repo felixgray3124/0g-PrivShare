@@ -21,7 +21,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <WagmiProvider config={config}>
         <RainbowKitProvider
           modalSize="compact"
-          initialChain={16602} // 0G-Galileo-Testnet
+          initialChain={16661} // 0G Mainnet
           locale="en"
         >
           <ZgStorageProvider>

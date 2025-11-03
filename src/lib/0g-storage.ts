@@ -54,9 +54,9 @@ declare global {
   }
 }
 
-// 0G Storage network configuration
-const RPC_URL = 'https://evmrpc-testnet.0g.ai/';
-const INDEXER_RPC = 'https://indexer-storage-testnet-turbo.0g.ai';
+// 0G Storage network configuration (Mainnet)
+const RPC_URL = 'https://evmrpc.0g.ai/';
+const INDEXER_RPC = 'https://indexer-storage-turbo.0g.ai';
 
 // Validate RPC URLs
 console.log('0G Storage: RPC URL:', RPC_URL);
@@ -420,7 +420,7 @@ export class ZgStorageService {
         console.log('0G Storage: Network name:', networkStatus.name);
         
         // Debug: Check if we're on the correct network
-        const expectedChainId = 16602; // 0G Galileo Testnet
+        const expectedChainId = 16661; // 0G Mainnet
         console.log('0G Storage: Network check - Expected:', expectedChainId, 'Got:', networkStatus.chainId);
         if (Number(networkStatus.chainId) !== expectedChainId) {
           console.warn(`0G Storage: Wrong network! Expected chainId ${expectedChainId}, got ${networkStatus.chainId}`);

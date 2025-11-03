@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { FileMetadata } from "../lib/fileMetadata";
-import { validateShareCode, getMappingFrom0G } from "../lib/ipfs-mapping";
+import { validateShareCode, getMappingFrom0G } from "../lib/mapping";
 
 export type FilePreviewInfo = {
   metadata: FileMetadata | null;

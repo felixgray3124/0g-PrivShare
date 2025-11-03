@@ -1,7 +1,7 @@
 // Supported network configuration
 export const supportedChains = {
   1: { name: 'Ethereum Mainnet', symbol: 'ETH', decimals: 18 },
-  16602: { name: '0G-Galileo-Testnet', symbol: '0G', decimals: 18 },
+  16661: { name: '0G Mainnet', symbol: '0G', decimals: 18 },
 }
 
 // Connect wallet
@@ -55,8 +55,8 @@ export async function switchNetwork(chainId: number) {
               symbol: chain.symbol,
               decimals: chain.decimals
             },
-            rpcUrls: ['https://evmrpc-testnet.0g.ai/'],
-            blockExplorerUrls: ['https://chainscan-galileo.0g.ai'],
+            rpcUrls: ['https://evmrpc.0g.ai/'],
+            blockExplorerUrls: ['https://chainscan.0g.ai'],
           }],
         })
       }

@@ -4,7 +4,7 @@ import { useAccount } from "wagmi";
 import { useZgStorage } from "../providers/ZgStorageProvider";
 import { useEthersSigner } from "./useEthers";
 import { encryptFile, generateKey } from "../lib/encryption";
-import { generateShareCode, storeMappingTo0G } from "../lib/ipfs-mapping";
+import { generateShareCode, storeMappingTo0G } from "../lib/mapping";
 import { config } from "../config";
 
 export type UploadedInfo = {

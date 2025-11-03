@@ -6,8 +6,8 @@
 export const config = {
   // 0G Storage network configuration
   zgStorage: {
-    rpcUrl: 'https://evmrpc-testnet.0g.ai/',
-    indexerRpc: 'https://indexer-storage-testnet-turbo.0g.ai',
+    rpcUrl: 'https://evmrpc.0g.ai/',
+    indexerRpc: 'https://indexer-storage-turbo.0g.ai',
   },
   // File upload settings based on 0G SDK constants
   // DEFAULT_SEGMENT_SIZE = 256 * 1024 = 256KB (0G SDK default)

@@ -117,6 +117,6 @@ export async function getMappingFrom0G(shareCode: string): Promise<MappingRecord
   if (local) return local;
 
   throw new Error(
-    "0G 映射查询尚未实现：请在上传设备上下载，或提供映射文件的 rootHash 以便解析。"
+    "Mapping record not found."
   );
 }

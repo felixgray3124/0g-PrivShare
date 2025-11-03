@@ -2,11 +2,11 @@
 import { createConfig, http } from 'wagmi'
 import { injected, metaMask, walletConnect } from 'wagmi/connectors'
 
-// 0G Chain configuration
+// 0G Chain configuration (Mainnet)
 const zgChain = {
-  id: 16602, // 0G Galileo Testnet
-  name: '0G-Galileo-Testnet',
-  network: '0g-galileo-testnet',
+  id: 16661, // 0G Mainnet
+  name: '0G Mainnet',
+  network: '0g-mainnet',
   nativeCurrency: {
     decimals: 18,
     name: '0G',
@@ -14,19 +14,19 @@ const zgChain = {
   },
   rpcUrls: {
     default: {
-      http: ['https://evmrpc-testnet.0g.ai/'],
+      http: ['https://evmrpc.0g.ai/'],
     },
     public: {
-      http: ['https://evmrpc-testnet.0g.ai/'],
+      http: ['https://evmrpc.0g.ai/'],
     },
   },
   blockExplorers: {
     default: {
       name: 'Chainscan',
-      url: 'https://chainscan-galileo.0g.ai',
+      url: 'https://chainscan.0g.ai',
     },
   },
-  testnet: true,
+  testnet: false,
 } as const
 
 // Get WalletConnect Project ID
